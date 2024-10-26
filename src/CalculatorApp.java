@@ -73,7 +73,7 @@ public class CalculatorApp {
             // exit program if enter quit
             if (input.equals("quit")) {
                 isClosed = true;
-                System.out.println("Goodbye!");
+                System.out.println("Bye Bye");
             }
 
         }
