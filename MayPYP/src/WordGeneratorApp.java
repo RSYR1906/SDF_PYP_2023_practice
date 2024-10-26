@@ -1,4 +1,4 @@
-package src;
+package MayPYP.src;
 
 import java.io.*;
 import java.util.*;
@@ -9,9 +9,10 @@ public class WordGeneratorApp {
 
     public static void main(String[] args) throws IOException {
 
-        String fileName = args[0];
+        // String fileName = args[0];
+        String fileName1 = "lovecraft_dreams.txt";
         // Read text from file
-        BufferedReader br = new BufferedReader(new FileReader(fileName));
+        BufferedReader br = new BufferedReader(new FileReader(fileName1));
         String line;
 
         while ((line = br.readLine()) != null) {
@@ -40,6 +41,7 @@ public class WordGeneratorApp {
 
             if (inputWord.equals("exit")) {
                 System.out.println("Goodbye!");
+                scanner.close();
                 break;
             }
 

@@ -1,4 +1,4 @@
-package src;
+package MayPYP.src;
 
 import java.util.Scanner;
 
