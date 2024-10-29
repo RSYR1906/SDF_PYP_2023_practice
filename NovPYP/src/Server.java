@@ -4,78 +4,88 @@ import java.util.*;
 
 public class Server {
 
-    @SuppressWarnings("unchecked")
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
         String fileName = "files/productlist.txt";
         Random rand = new Random();
         ArrayList<String[]> list = new ArrayList<>();
 
-        try (ServerSocket server = new ServerSocket(3000)) {
-            System.out.println("Waiting for connection...");
+        ServerSocket server = new ServerSocket(3000);
+        System.out.println("Waiting for connection...");
 
-            // Accept a connection
-            Socket conn = server.accept();
-            System.out.println("Connection established");
+        // Accept a connection
+        Socket conn = server.accept();
+        System.out.println("Connection established");
 
-            // Read product data from file
-            BufferedReader br = new BufferedReader(new FileReader(fileName));
-            String line;
-            while ((line = br.readLine()) != null) {
-                // Split each line by commas
-                String[] productDetails = line.split(",");
-                if (productDetails.length == 3) {
-                    list.add(productDetails); // Add only if it has exactly 3 elements
-                }
+        // Read product data from file
+        BufferedReader br = new BufferedReader(new FileReader(fileName));
+        String line;
+        while ((line = br.readLine()) != null) {
+            String[] productDetails = line.split(",");
+            if (productDetails.length == 3) {
+                list.add(productDetails);
             }
-            br.close();
-
-            int requestID = rand.nextInt(1000, 9999);
-            int itemCount = Math.min(rand.nextInt(1, 6), list.size());
-            int budget = 10;
-
-            // Shuffle the list and create a random subset
-            Collections.shuffle(list);
-            ArrayList<String[]> randomSubset = new ArrayList<>(list.subList(0, Math.min(list.size(), itemCount)));
-
-            // Send data to client
-            try (ObjectOutputStream oos = new ObjectOutputStream(conn.getOutputStream())) {
-                oos.writeInt(requestID);
-                oos.writeInt(itemCount);
-                oos.writeInt(budget);
-                oos.writeObject(randomSubset);
-                oos.flush();
-            }
-
-            // Receive response data from client
-            try (ObjectInputStream ois = new ObjectInputStream(conn.getInputStream())) {
-                Map<String, Object> responseData = (Map<String, Object>) ois.readObject();
-
-                // Extract data
-                int clientRequestID = (int) responseData.get("requestID");
-                String name = (String) responseData.get("name");
-                String email = (String) responseData.get("email");
-                ArrayList<String[]> itemsBought = (ArrayList<String[]>) responseData.get("itemsBought");
-                int totalPrice = (int) responseData.get("totalPrice");
-                int remainingBudget = (int) responseData.get("remainingBudget");
-
-                // Check budget status
-                if (remainingBudget >= 0) {
-                    System.out.println("Status: SUCCESS");
-                } else {
-                    System.out.println("Status: FAILED");
-                }
-
-                // Output the details
-                System.out.println("Client Request ID: " + clientRequestID);
-                System.out.println("Name: " + name);
-                System.out.println("Email: " + email);
-                System.out.println("Items Bought: " + itemsBought);
-                System.out.println("Total Price: " + totalPrice);
-                System.out.println("Remaining Budget: " + remainingBudget);
-            }
-
-        } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
         }
+        br.close();
+
+        int requestID = rand.nextInt(1000, 9999);
+        int itemCount = Math.min(rand.nextInt(1, 6), list.size());
+        int budget = 10;
+
+        // Shuffle the list and create a random subset
+        Collections.shuffle(list);
+        ArrayList<String[]> randomSubset = new ArrayList<>(list.subList(0, Math.min(list.size(), itemCount)));
+
+        // Send data to client
+        ObjectOutputStream oos = new ObjectOutputStream(conn.getOutputStream());
+        oos.writeInt(requestID);
+        oos.writeInt(itemCount);
+        oos.writeInt(budget);
+        oos.writeObject(randomSubset);
+        oos.flush();
+
+        // Reading data sent back from the client
+        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        List<String[]> itemList = new ArrayList<>();
+        double totalCost = 0;
+        double remainingBudget = budget;
+
+        System.out.println("Received from Client:");
+
+        // Read Client Details
+        String clientInfo;
+        while ((clientInfo = reader.readLine()) != null) {
+            if (clientInfo.startsWith("Request ID") || clientInfo.startsWith("Name") || clientInfo.startsWith("Email")) {
+                System.out.println(clientInfo);
+            } else if (clientInfo.startsWith("Total cost")) {
+                totalCost = Double.parseDouble(clientInfo.split(": ")[1].trim());
+            } else if (clientInfo.startsWith("Remaining budget")) {
+                remainingBudget = Double.parseDouble(clientInfo.split(": ")[1].trim());
+            } else {
+                // Parse the product details sent by the client
+                String[] productDetails = clientInfo.split(",");
+                itemList.add(productDetails);
+            }
+        }
+
+        // Display items bought and final budget details
+        System.out.println("Items Bought:");
+        for (String[] product : itemList) {
+            System.out.println("Product Name: " + product[0] + ", Price: " + product[1] + ", Rating: " + product[2]);
+        }
+
+        System.out.println("Total Cost: " + totalCost);
+        System.out.println("Remaining Budget: " + remainingBudget);
+
+        // Check if budget was sufficient
+        if (remainingBudget < 0) {
+            System.out.println("Status: FAILED - Insufficient budget");
+        } else {
+            System.out.println("Status: SUCCESS - Purchase successful");
+        }
+
+        // Close connections
+        reader.close();
+        conn.close();
+        server.close();
     }
 }
