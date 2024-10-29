@@ -1,8 +1,0 @@
-Apple,1.50,4.0
-Mineral water,1,4.5
-Tshirt,15,5
-Shoe,50,3,5
-Book,10,4.2
-Candy,2,1
-Orange Juice,2,3.8
-Fish,8,4.7
