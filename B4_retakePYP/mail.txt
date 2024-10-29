@@ -2,4 +2,4 @@ __address__
 
 Dear __first_name__,
 
-Thank you for staying with us over these __years__.
+Thank you for staying with us over these __years__ years.
